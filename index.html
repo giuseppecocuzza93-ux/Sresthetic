@@ -1,1 +1,49 @@
-<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#173330"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Sresthetic"><link rel="manifest" href="./manifest.json?v=2"><title>Sresthetic — Agenda</title><link rel="stylesheet" href="./style.css?v=2"></head><body><div id="app"><main style="padding:24px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#173330"><h1>Sresthetic</h1><p>Caricamento agenda…</p></main></div><script src="./app-v3.js?v=3"></script><script>window.addEventListener("load",function(){if("serviceWorker"in navigator){navigator.serviceWorker.register("./sw.js?v=2").catch(function(){});}});window.addEventListener("error",function(e){var a=document.getElementById("app");if(a&&a.innerHTML.indexOf("Caricamento agenda")!==-1){a.innerHTML="<main style=\"padding:24px;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;color:#173330\"><h1>Sresthetic</h1><p>Errore di caricamento. Ricarica la pagina.</p></main>";}});</script></body></html>
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#173330">
+<title>Sresthetic — Agenda</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f5f7f7;color:#173330;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+header{position:sticky;top:0;background:#f5f7f7ee;backdrop-filter:blur(14px);padding:16px;border-bottom:1px solid #d7e2e0;z-index:5}
+.bar{max-width:900px;margin:auto;display:flex;justify-content:space-between;align-items:center}.brand{font-size:21px;font-weight:900}.sub{font-size:12px;color:#78908c}
+main{max-width:900px;margin:auto;padding:20px 16px 100px}.hero{background:#173330;color:#fff;border-radius:24px;padding:24px}.hero h1{font-size:clamp(30px,8vw,52px);line-height:1;margin:8px 0}.hero p{color:#c5d8d4;line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}.card{background:#fff;border:1px solid #d7e2e0;border-radius:18px;padding:16px}.metric{font-size:28px;font-weight:900}.muted{color:#67817c;font-size:13px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #d7e2e0;padding:8px;display:flex;justify-content:center;gap:4px;z-index:10}nav button{border:0;background:none;padding:8px 12px;border-radius:12px;font-weight:800;color:#67817c}nav button.active{background:#e5f3ef;color:#0f766e}
+button{cursor:pointer}.primary{border:0;background:#0f766e;color:#fff;border-radius:12px;padding:10px 14px;font-weight:800}.secondary{border:1px solid #cbd9d6;background:#fff;color:#31534e;border-radius:12px;padding:10px 14px;font-weight:800}.danger{border:0;background:none;color:#b42318}
+.section{margin-top:20px}.head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.list{display:grid;gap:9px}.row{background:#fff;border:1px solid #dfe8e6;border-radius:15px;padding:13px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+form{display:grid;gap:10px}.formrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}input,select{width:100%;padding:11px;border:1px solid #cbd9d6;border-radius:10px;font:inherit}
+.empty{text-align:center;padding:24px;color:#78908c}@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="bar"><div><div class="brand">SRESTHETIC</div><div class="sub">Agenda personale + professionale</div></div><button class="primary" onclick="addAppointment()">＋ Aggiungi</button></div></header>
+<main id="app"><div class="hero"><h1>Sresthetic</h1><p>Caricamento agenda…</p></div></main>
+<nav id="nav"></nav>
+<script>
+(function(){
+"use strict";
+var KEY="sresthetic-data-v4";
+var data;try{data=JSON.parse(localStorage.getItem(KEY)||"null")}catch(e){data=null}
+if(!data)data={clients:[],appointments:[],tasks:[],events:[],expenses:[]};
+var page="home",today=new Date().toISOString().slice(0,10);
+function save(){try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(m){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]})}
+function nav(){var items=[["home","⌂","Oggi"],["agenda","▣","Agenda"],["clients","♙","Clienti"],["expenses","€","Spese"]];document.getElementById("nav").innerHTML=items.map(function(x){return '<button class="'+(page===x[0]?"active":"")+'" onclick="window.sgo(\''+x[0]+'\')">'+x[1]+" "+x[2]+"</button>"}).join("")}
+function render(){nav();var el=document.getElementById("app");if(page==="agenda")return agenda(el);if(page==="clients")return clients(el);if(page==="expenses")return expenses(el);home(el)}
+function home(el){var n=data.appointments.filter(function(a){return a.date===today}).length;el.innerHTML='<div class="hero"><div class="muted" style="color:#68c8b9">OGGI</div><h1>Tutto quello che devi ricordare, in un solo posto.</h1><p>Appuntamenti, clienti, impegni personali e spese. I dati restano sul dispositivo.</p></div><div class="grid"><div class="card"><div class="muted">Appuntamenti oggi</div><div class="metric">'+n+'</div></div><div class="card"><div class="muted">Clienti</div><div class="metric">'+data.clients.length+'</div></div><div class="card"><div class="muted">Spese</div><div class="metric">€ '+data.expenses.reduce(function(s,x){return s+Number(x.amount||0)},0).toFixed(2)+'</div></div><div class="card"><div class="muted">Stato</div><div class="metric">✓</div></div></div><div class="section"><div class="head"><h2>Prossimi appuntamenti</h2><button class="primary" onclick="addAppointment()">＋</button></div><div class="list">'+(data.appointments.filter(function(a){return a.date>=today}).sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time)}).slice(0,5).map(row).join("")||'<div class="card empty">Nessun appuntamento.</div>')+'</div></div>'}
+function row(a){return '<div class="row"><div><b>'+esc(a.date)+' · '+esc(a.time)+'</b><div class="muted">'+esc(a.client||"Impegno")+' · '+esc(a.service||"")+'</div></div><button class="danger" onclick="delApp(\''+a.id+'\')">Elimina</button></div>'}
+function agenda(el){el.innerHTML='<div class="head"><div><h2>Agenda</h2><div class="muted">I tuoi appuntamenti</div></div><button class="primary" onclick="addAppointment()">＋ Appuntamento</button></div><div class="list">'+(data.appointments.sort(function(a,b){return (a.date+a.time).localeCompare(b.date+b.time)}).map(row).join("")||'<div class="card empty">Agenda vuota.</div>')+'</div>'}
+function clients(el){el.innerHTML='<div class="head"><div><h2>Clienti</h2><div class="muted">'+data.clients.length+' clienti</div></div><button class="primary" onclick="addClient()">＋ Cliente</button></div><div class="list">'+(data.clients.map(function(c){return '<div class="row"><div><b>'+esc(c.name)+'</b><div class="muted">'+esc(c.phone||"")+'</div></div></div>'}).join("")||'<div class="card empty">Nessuna cliente.</div>')+'</div>'}
+function expenses(el){el.innerHTML='<div class="head"><div><h2>Spese</h2><div class="muted">Totale registrato</div></div><button class="primary" onclick="addExpense()">＋ Spesa</button></div><div class="list">'+(data.expenses.map(function(x){return '<div class="row"><div><b>'+esc(x.description)+'</b><div class="muted">'+esc(x.date)+'</div></div><b>€ '+Number(x.amount||0).toFixed(2)+'</b></div>'}).join("")||'<div class="card empty">Nessuna spesa.</div>')+'</div>'}
+window.sgo=function(p){page=p;render()};
+window.addAppointment=function(){var client=prompt("Nome cliente");if(client===null)return;var date=prompt("Data (AAAA-MM-GG)",today);if(!date)return;var time=prompt("Ora","09:00");if(!time)return;var service=prompt("Servizio","Appuntamento");data.appointments.push({id:String(Date.now()),client:client,date:date,time:time,service:service});save();render()};
+window.addClient=function(){var name=prompt("Nome e cognome");if(!name)return;var phone=prompt("Telefono","");data.clients.push({id:String(Date.now()),name:name,phone:phone||""});save();render()};
+window.addExpense=function(){var d=prompt("Descrizione");if(!d)return;var a=prompt("Importo (€)","0");data.expenses.push({id:String(Date.now()),description:d,amount:Number(a)||0,date:today});save();render()};
+window.delApp=function(i){data.appointments=data.appointments.filter(function(a){return a.id!==i});save();render()};
+render();
+})();
+</script>
+</body></html>
